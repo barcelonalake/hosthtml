@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Workspace OS v0.1 產品架構與開發計畫</title>
+  <style>
+    :root{
+      --bg:#0b1020;--panel:#10172a;--panel2:#131c33;--text:#e5edf7;--muted:#9aa9bd;--line:#26344f;
+      --accent:#7c5cff;--accent2:#22d3ee;--green:#34d399;--yellow:#fbbf24;--red:#fb7185;
+      --code:#09111f;--shadow:0 20px 70px rgba(0,0,0,.35);--radius:22px;
+    }
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 20% 0%,rgba(124,92,255,.25),transparent 30%),radial-gradient(circle at 80% 10%,rgba(34,211,238,.18),transparent 28%),var(--bg);color:var(--text);font:16px/1.75 -apple-system,BlinkMacSystemFont,"SF Pro Text","Noto Sans TC","PingFang TC",Segoe UI,sans-serif}
+    a{color:var(--accent2)} .wrap{max-width:1180px;margin:0 auto;padding:42px 22px 90px}.hero{padding:46px;border:1px solid var(--line);border-radius:32px;background:linear-gradient(135deg,rgba(16,23,42,.92),rgba(19,28,51,.72));box-shadow:var(--shadow);position:relative;overflow:hidden}.hero:after{content:"";position:absolute;right:-120px;top:-120px;width:320px;height:320px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));opacity:.14}.eyebrow{color:var(--accent2);font-weight:700;letter-spacing:.08em;text-transform:uppercase}.hero h1{font-size:clamp(34px,6vw,68px);line-height:1.05;margin:12px 0 18px}.subtitle{font-size:20px;color:var(--muted);max-width:860px}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;margin-top:22px}.card{grid-column:span 4;background:rgba(16,23,42,.78);border:1px solid var(--line);border-radius:var(--radius);padding:22px}.card.wide{grid-column:span 8}.card.full{grid-column:1/-1}.card h2,.card h3{margin-top:0;line-height:1.25}.card h2{font-size:28px}.card h3{font-size:20px;color:#fff}.muted{color:var(--muted)}.pillrow{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.pill{border:1px solid rgba(34,211,238,.28);background:rgba(34,211,238,.08);color:#dffbff;border-radius:999px;padding:6px 12px;font-size:14px}.toc{position:sticky;top:14px}.toc a{display:block;color:var(--muted);text-decoration:none;padding:7px 0;border-bottom:1px dashed rgba(154,169,189,.16)}.toc a:hover{color:var(--text)}section{margin-top:26px}pre{white-space:pre-wrap;background:var(--code);border:1px solid var(--line);border-radius:16px;padding:18px;overflow:auto;color:#dbeafe}code{background:rgba(9,17,31,.8);border:1px solid rgba(38,52,79,.8);padding:2px 6px;border-radius:8px}ul{padding-left:1.25em}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.step{background:rgba(124,92,255,.13);border:1px solid rgba(124,92,255,.32);border-radius:14px;padding:10px 14px}.arrow{color:var(--accent2);font-weight:800}.table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:16px;border:1px solid var(--line)}.table th,.table td{border-bottom:1px solid var(--line);padding:12px;text-align:left;vertical-align:top}.table th{background:rgba(124,92,255,.14)}.table tr:last-child td{border-bottom:0}.tag{display:inline-block;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700}.must{background:rgba(52,211,153,.15);color:#bbf7d0}.no{background:rgba(251,113,133,.15);color:#fecdd3}.warn{background:rgba(251,191,36,.15);color:#fde68a}.mermaidlike{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:linear-gradient(180deg,rgba(9,17,31,.92),rgba(15,23,42,.92));border:1px solid var(--line);border-radius:20px;padding:22px;color:#c7d2fe}.footer{margin-top:42px;color:var(--muted);text-align:center}.kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#bfdbfe}@media(max-width:860px){.card,.card.wide{grid-column:1/-1}.two,.three{grid-template-columns:1fr}.hero{padding:28px}.toc{position:static}.wrap{padding:24px 14px 60px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <div class="eyebrow">Product Architecture · v0.1</div>
+      <h1>AI Workspace OS<br/>產品架構與開發計畫</h1>
+      <p class="subtitle">採用「SwiftUI 原生前端 + Supabase 後端 + FastAPI AI Gateway + Workspace / Channel / Session 資訊架構」自研，不 fork 單一專案。核心目標是把 AI 對話、agent 任務、artifact、memory、task board 組成一個 Discord-like AI 工作空間。</p>
+      <div class="pillrow">
+        <span class="pill">SwiftUI</span><span class="pill">Supabase</span><span class="pill">FastAPI</span><span class="pill">OpenAI-compatible</span><span class="pill">Artifact</span><span class="pill">Memory</span><span class="pill">Task Board</span><span class="pill">Agent Run</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <aside class="card" id="toc">
+        <h3>目錄</h3>
+        <nav class="toc">
+          <a href="#positioning">1. 產品定位</a>
+          <a href="#concepts">2. 核心概念</a>
+          <a href="#scope">3. v0.1 範圍</a>
+          <a href="#architecture">4. 技術架構</a>
+          <a href="#data">5. 資料模型</a>
+          <a href="#swiftui">6. SwiftUI 模組</a>
+          <a href="#api">7. AI Gateway API</a>
+          <a href="#artifact-memory-task">8. Artifact / Memory / Task</a>
+          <a href="#milestones">9. 里程碑</a>
+          <a href="#tasks">10. 第一批任務</a>
+          <a href="#decision">11. 決策結論</a>
+        </nav>
+      </aside>
+
+      <section class="card wide" id="positioning">
+        <h2>1. 產品定位</h2>
+        <p><strong>一句話：</strong>一個類 Discord / Zulip 的 AI-native workspace，用 Workspace / Channel / Session 組織 AI 對話、agent 任務、artifact、memory 與 team collaboration。</p>
+        <div class="two">
+          <div>
+            <h3>不是什麼</h3>
+            <ul>
+              <li>不是單純聊天 App</li><li>不是 Open WebUI clone</li><li>不是 Claude Desktop clone</li><li>不是 Slack bot</li><li>不是純 agent runner</li><li>不是普通 project management tool</li>
+            </ul>
+          </div>
+          <div>
+            <h3>是什麼</h3>
+            <ul>
+              <li>Discord-like communication shell</li><li>Zulip-like topic/session structure</li><li>LibreChat-like multi-model AI layer</li><li>AionUi-like agent session control</li><li>LobeChat-like AI UX polish</li><li>自研 artifact / memory / task board</li><li>SwiftUI 原生跨 Apple 平台體驗</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="card full" id="concepts">
+        <h2>2. 產品核心概念</h2>
+        <div class="three">
+          <div class="card"><h3>Workspace</h3><p>最高層工作區，包含 members、channels、sessions、memories、artifacts、tasks、integrations、model settings。</p></div>
+          <div class="card"><h3>Channel</h3><p>長期分類容器，類似 Discord channel / Zulip stream。Channel 不直接等於一場對話，而是容納很多 Session。</p></div>
+          <div class="card"><h3>Session</h3><p>真正的 AI 工作單元：普通 AI 對話、research 任務、coding agent 任務、design 討論、artifact 生成流程。</p></div>
+          <div class="card"><h3>Message</h3><p>session 內訊息，類型包括 user、assistant、system、tool result、agent event、artifact event、memory event、task event。</p></div>
+          <div class="card"><h3>Artifact</h3><p>AI 生成或人類上傳的結果物：HTML、Markdown、Code、Diagram、Image、PDF、CSV、JSON、Prompt template。</p></div>
+          <div class="card"><h3>Memory / Task</h3><p>Memory 是跨 session 可引用知識；Task Board 是 AI cowork 的工作追蹤層，連結 session、agent run、artifact、message。</p></div>
+        </div>
+      </section>
+
+      <section class="card full" id="scope">
+        <h2>3. v0.1 產品範圍</h2>
+        <div class="two">
+          <div>
+            <h3><span class="tag must">必做</span></h3>
+            <ul>
+              <li>Workspace / Channel / Session 基礎資訊架構</li><li>SwiftUI 原生 App 骨架</li><li>Supabase Auth / Postgres / Realtime</li><li>OpenAI-compatible AI Gateway</li><li>基礎聊天體驗與 session 持久化</li><li>Artifact 基礎模型</li><li>Memory 基礎模型</li><li>Task Board 基礎模型</li><li>iOS 優先，macOS 共用架構</li>
+            </ul>
+          </div>
+          <div>
+            <h3><span class="tag no">不做</span></h3>
+            <ul>
+              <li>完整 Slack/Discord 社交系統</li><li>完整 agent marketplace</li><li>複雜 plugin system</li><li>self-host enterprise admin</li><li>完整 document editor</li><li>複雜 RAG pipeline</li><li>visionOS 深度 UI</li><li>多人即時光標協作</li><li>billing / marketplace</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="card full" id="architecture">
+        <h2>4. 技術架構總覽</h2>
+        <div class="mermaidlike">Apple Clients: iOS / macOS / visionOS<br/>　│<br/>　▼<br/>SwiftUI App<br/>　├── Supabase Client: Auth / Postgres / Realtime / Storage<br/>　└── AI Gateway Client<br/>　　　　│<br/>　　　　▼<br/>AI Gateway API<br/>　├── OpenAI-compatible providers<br/>　├── Claude adapter<br/>　├── DeepSeek adapter<br/>　├── Ollama adapter<br/>　├── Hermes adapter<br/>　└── Tool / Agent adapter</div>
+        <div class="three" style="margin-top:18px">
+          <div><h3>前端</h3><p>Swift + SwiftUI，MVVM + lightweight domain layer，Observation / async-await，iOS first，macOS second，visionOS later。</p></div>
+          <div><h3>後端</h3><p>Supabase：Auth、Postgres、Realtime、Storage、RLS。Edge Functions 只做輕量 webhook / metadata sync。</p></div>
+          <div><h3>AI Gateway</h3><p>FastAPI + Pydantic + httpx + SSE。Client 不直接打模型 API，而是經過統一 adapter。</p></div>
+        </div>
+      </section>
+
+      <section class="card full">
+        <h2>Monorepo 結構</h2>
+<pre>ai-workspace-os/
+  apps/
+    apple/
+      AIWorkspace.xcodeproj
+      AIWorkspace/
+        App/
+        Features/
+        Core/
+        Domain/
+        Services/
+        DesignSystem/
+        Resources/
+  services/
+    ai-gateway/
+      app/
+        main.py
+        api/
+        core/
+        providers/
+        sessions/
+        tools/
+        agents/
+      tests/
+      pyproject.toml
+  supabase/
+    migrations/
+    seed.sql
+    functions/
+  packages/
+    shared-schema/
+      openapi.yaml
+      json-schema/
+  docs/
+    prd.md
+    architecture.md
+    data-model.md
+    api.md
+    roadmap.md
+    decisions/</pre>
+      </section>
+
+      <section class="card full" id="data">
+        <h2>5. Supabase 資料模型</h2>
+        <table class="table">
+          <thead><tr><th>Table</th><th>用途</th><th>關鍵欄位</th></tr></thead>
+          <tbody>
+            <tr><td><code>profiles</code></td><td>應用層使用者資料，補 Supabase Auth</td><td>id, display_name, avatar_url</td></tr>
+            <tr><td><code>workspaces</code></td><td>最高層工作區</td><td>name, slug, owner_id, icon</td></tr>
+            <tr><td><code>workspace_members</code></td><td>成員與角色</td><td>workspace_id, user_id, role</td></tr>
+            <tr><td><code>channels</code></td><td>長期分類容器</td><td>workspace_id, name, description, kind, position</td></tr>
+            <tr><td><code>sessions</code></td><td>AI 工作單元</td><td>workspace_id, channel_id, title, summary, status, kind, model</td></tr>
+            <tr><td><code>messages</code></td><td>session 內訊息</td><td>role, content, content_json, status, model, parent_message_id</td></tr>
+            <tr><td><code>artifacts</code></td><td>成果物</td><td>title, kind, mime_type, storage_path, content, version</td></tr>
+            <tr><td><code>memories</code></td><td>跨 session 可引用知識</td><td>scope, kind, title, content, source_session_id, confidence, is_active</td></tr>
+            <tr><td><code>tasks</code></td><td>任務追蹤</td><td>title, description, status, priority, assignee_id, due_at</td></tr>
+            <tr><td><code>agent_runs</code></td><td>Agent 執行紀錄</td><td>session_id, task_id, status, agent_name, input, output, error</td></tr>
+          </tbody>
+        </table>
+        <p class="muted">v0.1 權限簡化為 owner / member / viewer；後續再補 enterprise admin、audit log、細粒度權限。</p>
+      </section>
+
+      <section class="card full" id="swiftui">
+        <h2>6. SwiftUI 模組設計</h2>
+        <div class="three">
+          <div><h3>App</h3><ul><li>AIWorkspaceApp</li><li>AppRouter</li><li>AuthGateView</li><li>RootWorkspaceView</li></ul></div>
+          <div><h3>Features</h3><ul><li>Auth</li><li>Workspace</li><li>Channel</li><li>Session</li><li>Chat</li><li>Artifact</li><li>Memory</li><li>TaskBoard</li><li>Settings</li></ul></div>
+          <div><h3>Core</h3><ul><li>Networking</li><li>Supabase</li><li>AIGateway</li><li>Realtime</li><li>Persistence</li><li>Logging</li><li>Config</li></ul></div>
+          <div><h3>Domain</h3><p>Models、Repositories、UseCases：SendMessage、CreateSession、CreateArtifact、SaveMemory。</p></div>
+          <div><h3>DesignSystem</h3><p>SidebarView、ChannelRow、SessionRow、MessageBubble、ComposerView、ArtifactCard、MemoryCard、TaskCard。</p></div>
+          <div><h3>主要畫面</h3><p>iPad/macOS 三欄：Workspace/Channel/Session、Session Thread、Context Panel。iPhone 用 Tab / Stack Navigation。</p></div>
+        </div>
+      </section>
+
+      <section class="card full" id="api">
+        <h2>7. AI Gateway API 設計</h2>
+        <div class="two">
+          <div>
+            <h3>Endpoints</h3>
+<pre>GET  /health
+GET  /v1/models
+POST /v1/chat/completions
+POST /v1/sessions/{session_id}/messages</pre>
+          </div>
+          <div>
+            <h3>Provider Adapter</h3>
+<pre>BaseProvider
+  list_models() -> list[ModelInfo]
+  chat(request) -> ChatResponse
+  stream_chat(request) -> async chunks
+
+Implementations:
+  OpenAICompatibleProvider
+  ClaudeProvider
+  DeepSeekProvider
+  OllamaProvider
+  HermesProvider</pre>
+          </div>
+        </div>
+        <p><code>/v1/sessions/{session_id}/messages</code> 是 App 內部主入口：保存 user message → 調 AI provider → stream assistant response → 保存 assistant message。</p>
+      </section>
+
+      <section class="card full" id="artifact-memory-task">
+        <h2>8. Artifact / Memory / Task 設計</h2>
+        <div class="three">
+          <div><h3>Artifact MVP</h3><ul><li>從 assistant message 建立 artifact</li><li>右側 panel 預覽</li><li>支援 markdown / html / code / json</li><li>version 欄位</li><li>可複製 / 下載 / 分享</li></ul></div>
+          <div><h3>Memory MVP</h3><ul><li>半自動：AI 建議，使用者確認</li><li>手動新增 / 從 message 建立</li><li>active workspace memories 注入 prompt</li><li>可編輯 / 停用 / 刪除</li><li>v0.2 再做 embedding / semantic retrieval</li></ul></div>
+          <div><h3>Task Board MVP</h3><ul><li>Todo / In Progress / Blocked / Done</li><li>從 message 建立 task</li><li>連結 session / artifact / agent run</li><li>workspace task board page</li></ul></div>
+        </div>
+      </section>
+
+      <section class="card full" id="milestones">
+        <h2>9. v0.1 開發里程碑</h2>
+        <table class="table">
+          <thead><tr><th>Milestone</th><th>目標</th><th>驗收</th></tr></thead>
+          <tbody>
+            <tr><td>M0 設計與原型</td><td>確認 UX 與資料模型</td><td>docs、HTML clickable prototype、Supabase migration draft</td></tr>
+            <tr><td>M1 Supabase 基礎</td><td>資料可存</td><td>登入後可見 workspace，可 create channel/session/message</td></tr>
+            <tr><td>M2 AI Gateway</td><td>統一調模型</td><td>curl 可 stream，Swift 可收 token，DB 有 message record</td></tr>
+            <tr><td>M3 SwiftUI App Shell</td><td>App 骨架可用</td><td>登入、workspace、channel、session、composer 可操作</td></tr>
+            <tr><td>M4 Chat MVP</td><td>真正能聊天</td><td>新建 session、發訊息、AI streaming、重開後 message 還在</td></tr>
+            <tr><td>M5 Artifact MVP</td><td>回答可變成果物</td><td>assistant message 可轉 artifact，右側打開並保存</td></tr>
+            <tr><td>M6 Memory MVP</td><td>可保存與注入 memory</td><td>新 session 參考偏好，停用後不注入</td></tr>
+            <tr><td>M7 Task Board MVP</td><td>session 能產生任務</td><td>task 可切狀態，可連回原 session</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card full" id="tasks">
+        <h2>10. 第一批具體任務清單</h2>
+        <ol>
+          <li>建立 repo 結構：<code>apps/apple</code>、<code>services/ai-gateway</code>、<code>supabase/migrations</code>、<code>docs</code></li>
+          <li>寫 <code>docs/prd.md</code>：產品定位、核心用戶、核心流程、v0.1 scope、非目標、驗收標準</li>
+          <li>寫 <code>docs/data-model.md</code>：Workspace、Channel、Session、Message、Artifact、Memory、Task、AgentRun</li>
+          <li>建立 <code>supabase/migrations/0001_initial_schema.sql</code></li>
+          <li>建立 FastAPI AI Gateway：Pydantic、httpx、sse-starlette、pytest</li>
+          <li>實作 provider adapter：base、openai_compatible、claude、ollama、hermes</li>
+          <li>建立 SwiftUI App shell：AuthGateView、RootWorkspaceView、SidebarView、SessionThreadView、ContextPanelView、ComposerView</li>
+          <li>接 Supabase Auth：登入、登出、profile、workspace list</li>
+          <li>接 session list：channel list、session list、create session、switch session</li>
+          <li>接 chat streaming：user message、SSE token、UI 更新、assistant message 保存</li>
+        </ol>
+      </section>
+
+      <section class="card full">
+        <h2>v0.1 最小可用驗收標準</h2>
+        <div class="flow">
+          <span class="step">登入</span><span class="arrow">→</span><span class="step">建立 Workspace</span><span class="arrow">→</span><span class="step">建立 Channel</span><span class="arrow">→</span><span class="step">建立 Session</span><span class="arrow">→</span><span class="step">AI Streaming Chat</span><span class="arrow">→</span><span class="step">保存 Messages</span><span class="arrow">→</span><span class="step">建立 Artifact</span><span class="arrow">→</span><span class="step">建立 Memory</span><span class="arrow">→</span><span class="step">建立 Task</span><span class="arrow">→</span><span class="step">重開 App 狀態恢復</span>
+        </div>
+      </section>
+
+      <section class="card full" id="decision">
+        <h2>11. 決策結論</h2>
+        <p>採用這條技術路線：</p>
+<pre>SwiftUI 原生前端
++ Supabase 後端
++ FastAPI AI Gateway
++ OpenAI-compatible provider layer
++ Workspace / Channel / Session 資訊架構
++ 自研 Artifact / Memory / Task Board
++ Agent run 預留，不過早複雜化</pre>
+        <p>第一版最重要的不是 agent 多強，而是把核心閉環做出來：</p>
+        <div class="flow">
+          <span class="step">人提出問題</span><span class="arrow">→</span><span class="step">AI 在 session 中工作</span><span class="arrow">→</span><span class="step">產生 artifact</span><span class="arrow">→</span><span class="step">沉澱 memory</span><span class="arrow">→</span><span class="step">拆出 task</span><span class="arrow">→</span><span class="step">task 回到 session 執行</span>
+        </div>
+        <p class="muted">這個閉環成立，產品就不是聊天工具，而是 AI 工作空間。</p>
+      </section>
+    </div>
+    <div class="footer">AI Workspace OS v0.1 · Generated for project planning · 2026-05-12</div>
+  </main>
+</body>
+</html>
