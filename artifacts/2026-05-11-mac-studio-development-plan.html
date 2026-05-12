@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mac Studio 本機開發計畫與開發文檔</title>
+  <style>
+:root {
+  color-scheme: light dark;
+  --bg: #0b1020;
+  --panel: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #263244;
+  --accent: #60a5fa;
+  --accent-2: #34d399;
+  --code-bg: #0f172a;
+  --blockquote: #172554;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f6f8fb;
+    --panel: #ffffff;
+    --text: #111827;
+    --muted: #4b5563;
+    --border: #e5e7eb;
+    --accent: #2563eb;
+    --accent-2: #059669;
+    --code-bg: #f3f4f6;
+    --blockquote: #eff6ff;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
+  line-height: 1.68;
+  background: radial-gradient(circle at top left, rgba(96,165,250,.20), transparent 32rem), var(--bg);
+  color: var(--text);
+}
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 48px 24px 72px;
+}
+article {
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 42px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.22);
+}
+h1, h2, h3 { line-height: 1.25; letter-spacing: -0.02em; }
+h1 {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  margin: 0 0 1.2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+h2 {
+  font-size: 1.65rem;
+  margin-top: 2.3rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border);
+  color: var(--accent);
+}
+h3 { font-size: 1.2rem; margin-top: 1.6rem; color: var(--accent-2); }
+p, li { font-size: 1rem; }
+a { color: var(--accent); }
+hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
+blockquote {
+  margin: 1.2rem 0;
+  padding: 1rem 1.2rem;
+  border-left: 4px solid var(--accent);
+  background: var(--blockquote);
+  border-radius: 12px;
+  color: var(--muted);
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: .12rem .35rem;
+  font-size: .92em;
+}
+pre {
+  overflow-x: auto;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+}
+pre code { background: transparent; border: 0; padding: 0; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  border-radius: 12px;
+}
+th, td { border: 1px solid var(--border); padding: .75rem .85rem; vertical-align: top; }
+th { background: color-mix(in srgb, var(--accent) 18%, transparent); text-align: left; }
+ul, ol { padding-left: 1.5rem; }
+input[type="checkbox"] { transform: translateY(1px); }
+.badge {
+  display: inline-block;
+  font-size: .78rem;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: .2rem .65rem;
+  margin-bottom: 1rem;
+}
+@media print {
+  body { background: white; }
+  .container { max-width: none; padding: 0; }
+  article { box-shadow: none; border: 0; border-radius: 0; }
+}
+</style>
+</head>
+<body>
+  <main class="container">
+    <article>
+      <div class="badge">Converted from .hermes/plans/2026-05-11_033349-mac-studio-development-plan.md</div>
+      <h1 id="mac-studio">Mac Studio 本機開發計畫與開發文檔</h1>
+<blockquote>
+<p><strong>For Hermes:</strong> Use subagent-driven-development skill to implement this plan task-by-task.</p>
+</blockquote>
+<p><strong>Goal:</strong> 在 Mac Studio 上建立一套可長期維護、可測試、可部署的本機開發工作流。</p>
+<p><strong>Architecture:</strong> 以 Mac Studio 作為主要開發與測試機，使用 Git 管理版本，使用 Docker/本機 runtime 隔離服務，使用 <code>.env</code> 管理機密設定，所有功能以小步提交、測試先行、文件同步更新為原則。</p>
+<p><strong>Tech Stack:</strong> macOS、Homebrew、Git、VS Code/Cursor、Docker Desktop 或 OrbStack、Node.js/Python、SQLite/PostgreSQL、pytest/vitest、GitHub。</p>
+<hr />
+<h2 id="1">1. 適用範圍</h2>
+<p>本文件適用於你在 Mac Studio 上進行以下類型開發：</p>
+<ul>
+<li>Web app / API service</li>
+<li>Discord / Telegram bot</li>
+<li>AI agent / LLM 工具整合</li>
+<li>Python / Node.js 後端服務</li>
+<li>本機原型驗證後部署到雲端 VPS 或容器平台</li>
+</ul>
+<p>如果實際專案已有技術棧，以下內容可按專案調整。</p>
+<hr />
+<h2 id="2">2. 開發原則</h2>
+<ol>
+<li><strong>本機可重現</strong>：新機器照著文檔可重新搭建環境。</li>
+<li><strong>小步提交</strong>：每完成一個可驗證任務就 commit。</li>
+<li><strong>配置與密鑰分離</strong>：<code>.env</code> 不進 Git；提供 <code>.env.example</code>。</li>
+<li><strong>測試先行</strong>：核心邏輯先寫測試，再實作。</li>
+<li><strong>文檔同步</strong>：每新增功能，同步更新 <code>README.md</code> 或 <code>docs/</code>。</li>
+<li><strong>避免一次性大改</strong>：每次只處理一個明確目標。</li>
+</ol>
+<hr />
+<h2 id="3-mac-studio">3. Mac Studio 基礎環境</h2>
+<h3 id="task-1">Task 1: 安裝命令列工具</h3>
+<p><strong>Objective:</strong> 準備 macOS 基礎編譯與 Git 工具。</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">xcode-select --install
+</code></pre>
+<p><strong>Verify:</strong></p>
+<pre><code class="language-bash">git --version
+clang --version
+</code></pre>
+<p>Expected: 能正常輸出版本號。</p>
+<hr />
+<h3 id="task-2-homebrew">Task 2: 安裝 Homebrew</h3>
+<p><strong>Objective:</strong> 使用 Homebrew 管理開發依賴。</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;
+</code></pre>
+<p>Apple Silicon Mac Studio 通常需要加入：</p>
+<pre><code class="language-bash">eval &quot;$(/opt/homebrew/bin/brew shellenv)&quot;
+</code></pre>
+<p>建議寫入 <code>~/.zprofile</code>。</p>
+<p><strong>Verify:</strong></p>
+<pre><code class="language-bash">brew doctor
+brew --version
+</code></pre>
+<hr />
+<h3 id="task-3">Task 3: 安裝常用工具</h3>
+<p><strong>Objective:</strong> 安裝開發常用 CLI。</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">brew install git gh jq curl wget tree ripgrep fd direnv just
+</code></pre>
+<p><strong>Verify:</strong></p>
+<pre><code class="language-bash">gh --version
+jq --version
+rg --version
+</code></pre>
+<hr />
+<h3 id="task-4">Task 4: 安裝編輯器與容器工具</h3>
+<p><strong>Objective:</strong> 建立日常開發環境。</p>
+<p><strong>Command:</strong></p>
+<pre><code class="language-bash">brew install --cask visual-studio-code
+brew install --cask docker
+</code></pre>
+<p>可選替代：</p>
+<pre><code class="language-bash">brew install --cask cursor
+brew install --cask orbstack
+</code></pre>
+<p><strong>Recommendation:</strong></p>
+<ul>
+<li>一般 Docker 相容需求：Docker Desktop</li>
+<li>更輕量、Mac 體驗更好：OrbStack</li>
+</ul>
+<hr />
+<h2 id="4">4. 專案目錄規範</h2>
+<p>建議統一放在：</p>
+<pre><code class="language-bash">mkdir -p ~/Developer
+cd ~/Developer
+</code></pre>
+<p>單一專案結構：</p>
+<pre><code class="language-text">my-project/
+  README.md
+  docs/
+    development.md
+    deployment.md
+    architecture.md
+  src/
+  tests/
+  scripts/
+  .env.example
+  .gitignore
+  package.json 或 pyproject.toml
+  docker-compose.yml
+</code></pre>
+<hr />
+<h2 id="5-git-github">5. Git 與 GitHub 工作流</h2>
+<h3 id="task-5-git">Task 5: 設定 Git 身分</h3>
+<pre><code class="language-bash">git config --global user.name &quot;你的名字&quot;
+git config --global user.email &quot;你的信箱&quot;
+git config --global init.defaultBranch main
+</code></pre>
+<h3 id="task-6-github-cli">Task 6: 登入 GitHub CLI</h3>
+<pre><code class="language-bash">gh auth login
+</code></pre>
+<p>選擇：</p>
+<ul>
+<li>GitHub.com</li>
+<li>HTTPS 或 SSH 均可</li>
+<li>用瀏覽器登入</li>
+</ul>
+<p><strong>Verify:</strong></p>
+<pre><code class="language-bash">gh auth status
+</code></pre>
+<h3 id="commit">Commit 規範</h3>
+<p>使用 Conventional Commits：</p>
+<pre><code class="language-text">feat: 新功能
+fix: 修 bug
+docs: 文件
+test: 測試
+refactor: 重構
+chore: 工具或設定
+</code></pre>
+<hr />
+<h2 id="6-python">6. Python 專案標準流程</h2>
+<h3 id="task-7a-python">Task 7A: 建立 Python 專案</h3>
+<pre><code class="language-bash">mkdir my-python-project
+cd my-python-project
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+</code></pre>
+<p>建議依賴：</p>
+<pre><code class="language-bash">pip install pytest ruff python-dotenv
+</code></pre>
+<p>目錄：</p>
+<pre><code class="language-text">src/my_app/
+  __init__.py
+  main.py
+tests/
+  test_main.py
+</code></pre>
+<p>測試：</p>
+<pre><code class="language-bash">pytest -q
+ruff check .
+</code></pre>
+<hr />
+<h2 id="7-nodejs">7. Node.js 專案標準流程</h2>
+<h3 id="task-7b-nodejs">Task 7B: 建立 Node.js 專案</h3>
+<p>安裝 Node：</p>
+<pre><code class="language-bash">brew install nvm
+mkdir -p ~/.nvm
+</code></pre>
+<p>加入 shell 設定後：</p>
+<pre><code class="language-bash">nvm install --lts
+nvm use --lts
+</code></pre>
+<p>建立專案：</p>
+<pre><code class="language-bash">mkdir my-node-project
+cd my-node-project
+npm init -y
+npm install dotenv
+npm install -D typescript tsx vitest eslint prettier
+</code></pre>
+<p>測試：</p>
+<pre><code class="language-bash">npm test
+npm run lint
+</code></pre>
+<hr />
+<h2 id="8">8. 環境變數與密鑰管理</h2>
+<p>建立 <code>.env.example</code>：</p>
+<pre><code class="language-env">APP_ENV=development
+LOG_LEVEL=debug
+DATABASE_URL=sqlite:///local.db
+API_KEY=replace-me
+</code></pre>
+<p>本機建立 <code>.env</code>：</p>
+<pre><code class="language-bash">cp .env.example .env
+</code></pre>
+<p><code>.gitignore</code> 必須包含：</p>
+<pre><code class="language-gitignore">.env
+*.local
+.DS_Store
+node_modules/
+.venv/
+__pycache__/
+</code></pre>
+<p>規則：</p>
+<ul>
+<li><code>.env</code> 不提交。</li>
+<li><code>.env.example</code> 必須提交。</li>
+<li>密鑰輪換後同步更新部署環境。</li>
+</ul>
+<hr />
+<h2 id="9">9. 本機服務啟動方式</h2>
+<p>建議提供 <code>justfile</code>：</p>
+<pre><code class="language-makefile">setup:
+    echo &quot;install dependencies here&quot;
+
+dev:
+    echo &quot;start dev server here&quot;
+
+test:
+    echo &quot;run tests here&quot;
+
+lint:
+    echo &quot;run lint here&quot;
+</code></pre>
+<p>之後統一使用：</p>
+<pre><code class="language-bash">just setup
+just dev
+just test
+just lint
+</code></pre>
+<hr />
+<h2 id="10-docker">10. Docker / 資料庫策略</h2>
+<p>如果只需要輕量本機資料：</p>
+<ul>
+<li>優先 SQLite</li>
+<li>避免過早引入 PostgreSQL</li>
+</ul>
+<p>如果需要 PostgreSQL，建立 <code>docker-compose.yml</code>：</p>
+<pre><code class="language-yaml">services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports:
+      - &quot;5432:5432&quot;
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+</code></pre>
+<p>啟動：</p>
+<pre><code class="language-bash">docker compose up -d
+</code></pre>
+<p>驗證：</p>
+<pre><code class="language-bash">docker compose ps
+</code></pre>
+<hr />
+<h2 id="11">11. 測試與驗收標準</h2>
+<p>每個功能完成前必須通過：</p>
+<pre><code class="language-bash"># Python
+pytest -q
+ruff check .
+
+# Node.js
+npm test
+npm run lint
+</code></pre>
+<p>驗收清單：</p>
+<ul>
+<li>[ ] 功能符合需求</li>
+<li>[ ] 測試覆蓋核心邏輯</li>
+<li>[ ] 錯誤情境有處理</li>
+<li>[ ] <code>.env.example</code> 已更新</li>
+<li>[ ] README / docs 已更新</li>
+<li>[ ] 沒有提交密鑰</li>
+<li>[ ] 可以從零啟動專案</li>
+</ul>
+<hr />
+<h2 id="12">12. 開發階段計畫</h2>
+<h3 id="phase-0">Phase 0: 需求確認</h3>
+<p>輸出：</p>
+<ul>
+<li>功能列表</li>
+<li>使用者流程</li>
+<li>技術棧</li>
+<li>資料模型草案</li>
+<li>驗收條件</li>
+</ul>
+<h3 id="phase-1">Phase 1: 專案初始化</h3>
+<p>輸出：</p>
+<ul>
+<li>Git repo</li>
+<li>基礎目錄</li>
+<li>README</li>
+<li><code>.env.example</code></li>
+<li>測試框架</li>
+<li>lint/format 工具</li>
+</ul>
+<h3 id="phase-2-mvp">Phase 2: 最小可用版本 MVP</h3>
+<p>輸出：</p>
+<ul>
+<li>一條主流程可跑通</li>
+<li>本機可啟動</li>
+<li>有基本測試</li>
+<li>有錯誤日誌</li>
+</ul>
+<h3 id="phase-3">Phase 3: 功能擴展</h3>
+<p>輸出：</p>
+<ul>
+<li>按優先級逐項實作</li>
+<li>每項功能獨立 commit</li>
+<li>每項功能有測試</li>
+</ul>
+<h3 id="phase-4">Phase 4: 穩定化</h3>
+<p>輸出：</p>
+<ul>
+<li>補齊 edge cases</li>
+<li>改善錯誤訊息</li>
+<li>增加日誌</li>
+<li>整理文件</li>
+</ul>
+<h3 id="phase-5">Phase 5: 部署準備</h3>
+<p>輸出：</p>
+<ul>
+<li>Dockerfile 或部署腳本</li>
+<li>production <code>.env</code> 規格</li>
+<li>backup/restore 策略</li>
+<li>監控與重啟策略</li>
+</ul>
+<hr />
+<h2 id="13">13. 開發日常操作流程</h2>
+<p>每次開工：</p>
+<pre><code class="language-bash">cd ~/Developer/my-project
+git pull
+just dev
+</code></pre>
+<p>開新功能：</p>
+<pre><code class="language-bash">git checkout -b feat/feature-name
+</code></pre>
+<p>完成後：</p>
+<pre><code class="language-bash">just test
+just lint
+git status
+git add .
+git commit -m &quot;feat: implement feature name&quot;
+git push -u origin feat/feature-name
+</code></pre>
+<hr />
+<h2 id="14">14. 風險與對策</h2>
+<table>
+<thead>
+<tr>
+<th>風險</th>
+<th>對策</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mac 本機環境不可重現</td>
+<td>用 README、justfile、Docker 固化流程</td>
+</tr>
+<tr>
+<td>密鑰誤提交</td>
+<td><code>.gitignore</code>、<code>.env.example</code>、提交前檢查</td>
+</tr>
+<tr>
+<td>功能越做越大</td>
+<td>Phase 切分、小步 commit</td>
+</tr>
+<tr>
+<td>測試缺失</td>
+<td>每個核心功能先寫測試</td>
+</tr>
+<tr>
+<td>Apple Silicon 相容問題</td>
+<td>優先使用 arm64 image；必要時指定 platform</td>
+</tr>
+<tr>
+<td>本機能跑、部署不能跑</td>
+<td>提早引入 Docker 或 CI 驗證</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="15">15. 需要你補充的專案資訊</h2>
+<p>要把本計畫改成「具體專案級開發文檔」，需要以下資訊：</p>
+<ol>
+<li>專案類型：Web、Bot、AI Agent、API、桌面工具？</li>
+<li>技術偏好：Python、Node.js、Go、Rust？</li>
+<li>是否需要資料庫？SQLite / PostgreSQL / Supabase？</li>
+<li>是否需要部署？部署到 VPS、Docker、Cloudflare、Vercel？</li>
+<li>目標功能列表：MVP 必須包含哪些功能？</li>
+<li>是否多人協作？是否需要 GitHub issue / PR 流程？</li>
+</ol>
+<hr />
+<h2 id="16">16. 下一步</h2>
+<p>如果專案尚未建立：</p>
+<ol>
+<li>確定技術棧。</li>
+<li>在 <code>~/Developer</code> 建立 repo。</li>
+<li>建立 README、<code>.env.example</code>、測試框架。</li>
+<li>實作第一條 MVP 主流程。</li>
+<li>每完成一項功能就測試、提交、更新文件。</li>
+</ol>
+<p>如果專案已存在：</p>
+<ol>
+<li>先檢查現有目錄與依賴。</li>
+<li>補 <code>.env.example</code>、README、測試命令。</li>
+<li>補本機啟動文檔。</li>
+<li>再進入功能開發。</li>
+</ol>
+    </article>
+  </main>
+</body>
+</html>
